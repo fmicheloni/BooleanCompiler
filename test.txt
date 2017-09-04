@@ -1,0 +1,19 @@
+let c = true;
+let a = true;
+let b = false;
+a&&b;
+let d;
+{
+	let f;
+	{
+		let a;
+		{
+			let me;
+		}
+	}
+
+	{
+		let you;
+	}
+	let scio;
+}
