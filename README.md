@@ -1,11 +1,11 @@
 # Boolean Language Compiler
 
-### Build
+## Build
 The build phase is described in the `build.sh` file.
 
 The result of the build is put int the `dist` folder.
 
-#### BoolLang Features
+### BoolLang Features
 
 The compiler will make the lexical, syntactic and semantic analysis over an hypothetical programming language used for computing boolean operations.
 
@@ -16,7 +16,7 @@ The language supports the following features:
 * Operators' precendence (c-like)
 * Comments
 
-#### Examples
+### Examples
 
 1. *Simple boolean operation.*
 ```typescript
@@ -59,7 +59,7 @@ The language supports the following features:
 ```
 
 
-#### Info
+## Info
 Project for the Formal Languages and Compilers exam / UNIBZ / 2016-2017
 
 
