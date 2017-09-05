@@ -1,5 +1,10 @@
-echo "Cleaning..."
-rm dist/*
+if [ -d dist/ ]; then
+	echo "Cleaning..."
+	rm dist/*
+else
+	echo "Creating local folder dist/..."
+	mkdir dist/
+fi
 
 echo "Copying resources..."
 cp src/boolean/bool_operations.h dist/
