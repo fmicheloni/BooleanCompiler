@@ -1,5 +1,20 @@
+/**
+*     
+*     Syntactic and semantic definition of the BoolLanguage. 
+*     
+*     The file is divided in three parts:
+*           - c imports;
+*           - set of rules that identifies the syntactic part of the language,
+*             each one linked to an action that will manage the semantic part;
+*           - main method and generic c code (the result of the compiler will be an executable).
+*
+*/
+
 %{
 
+/*
+*     Suppress warnings at compile time.
+*/
 int yylex();
 void yyerror( const char *s );
 
@@ -12,25 +27,18 @@ void yyerror( const char *s );
 #include "scope.h"
 %}
 
-
+/*
+*     Union of all the accepted types that can be returned by a rule. Basically
+*     the type of the value of each ID.
+*/
 %union {
-            int booleanVal;               // boolean value
-            singleSymbol* symbol;         // type of a symbol
-       }
+            int booleanVal;               // boolean value, can be either 1 or 0
+            single_symbol* symbol;        // type of a symbol
+}
 
 %token <booleanVal>     BOOLEAN
 %token <symbol>         ID
-%token                  SEMI
-%token                  AND
-%token                  OR
-%token                  XOR
-%token                  NOT
-%token                  LEFTPAR
-%token                  RIGHTPAR
-%token                  LET
-%token                  ASSIGN
-%token                  LEFTCUR
-%token                  RIGHTCUR
+%token                  SEMI AND OR XOR NOT LEFTPAR RIGHTPAR LET ASSIGN LEFTCUR RIGHTCUR
 
 %type <symbol>          operation
 
@@ -58,7 +66,7 @@ statement   : LEFTCUR scope RIGHTCUR
             ;
 
 declaration : LET ID                      {
-                                               singleSymbol* mySym = declareVariable( $2 );
+                                               single_symbol* mySym = declareVariable( $2 );
                                                if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] is already defined in the current scope", $2->name );
@@ -69,7 +77,7 @@ declaration : LET ID                      {
             ;
 
 instantiation : LET ID ASSIGN operation   {
-                                                singleSymbol* mySym = declareVariable( $2 );
+                                                single_symbol* mySym = declareVariable( $2 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] is already defined in the current scope", $2->name );
@@ -82,7 +90,7 @@ instantiation : LET ID ASSIGN operation   {
             ;
 
 assignment  : ID ASSIGN operation         {
-                                                singleSymbol* mySym =  findSymbol( $1 );
+                                                single_symbol* mySym =  findSymbol( $1 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] has not been declared", $1->name );
@@ -100,7 +108,7 @@ operation   : operation AND operation     { $$ = createUnlinkedSymbol( $1->value
             | LEFTPAR operation RIGHTPAR  { $$ = $2; }
             | NOT operation               { $$ = createUnlinkedSymbol( !$2->value ); }
             | ID                          {
-                                                singleSymbol* mySym =  findSymbol( $1 );
+                                                single_symbol* mySym =  findSymbol( $1 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] has not been declared", $1->name );
@@ -122,8 +130,8 @@ operation   : operation AND operation     { $$ = createUnlinkedSymbol( $1->value
 
 #include "lex.yy.c"
 
-singleSymbol *symbol = 0;
-singleScope *currentScope = 0;
+single_symbol *symbol_head = 0;
+single_scope *current_scope = 0;
 
 extern int yylineno;
 

@@ -1,17 +1,44 @@
+/**
+*	
+*	Lexical definition of the BoolLanguage. 
+*	
+*	The file is divided in two parts:
+*		- c imports and variables used;
+*		- set of regex that identifies keywords and variables of the language.
+*
+*/
+
 %option noyywrap
 %option yylineno
 %{
-#include <stdlib.h>
-#include <string.h>
 
-#include "bool_operations.h"
-#include "symbol_table.h"
+	/*
+	*	IMPORTS
+	*/
+	#include <stdlib.h>
+	#include <string.h>
 
-int scopeLevel = 0;
-int idCount = 0;
+	#include "bool_operations.h"
+	#include "symbol_table.h"
 
+	/*
+	*	Root scope of the program is 0. 
+	*	Each time a scope in entered, count is increased.
+	*	Each time a scope is left behind, count is decreased.
+	*/
+	int scopeLevel = 0;
+
+	/*
+	*	Count used for defining the ID of a scope. ID is unique for each scope.
+	*/
+	int idCount = 0;
 %}
 
+
+/**
+*
+*	Set of REGEX used for identifying tokens in the language.
+*/
 DIGIT    [0-9]
 LETTER   [a-zA-Z]
 ID       {LETTER}({LETTER}|{DIGIT})*
@@ -50,7 +77,7 @@ let 		{
 
 {ID}		{
             	char* name = strdup(yytext); 
-            	singleSymbol* s = initSymbol( name );
+            	single_symbol* s = initSymbol( name );
 
 				yylval.symbol = s;
 
