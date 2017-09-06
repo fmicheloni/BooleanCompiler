@@ -7,60 +7,63 @@
 #include "bool_operations.h"
 #include "scope.h"
 
-////////////////////////////////////////////
-//                  SYMBOL                //
-////////////////////////////////////////////
-
 typedef struct {
 	char *name;						// Name of the symbol.
 	int value;						// Value of the current symbol, could be either 0 or 1.
-	struct singleSymbol *next;  	// Pointer to the next symbol in the current scope.
+	struct single_symbol *next;  	// Pointer to the next symbol in the current scope.
 	int is_initialized;				// Defines whether a variable has been initialized.
-	struct singleScope *scope;
-} singleSymbol;
+	struct single_scope *scope;
+} single_symbol;
 
 /*
-*
-*
+*	Reference to the scope.
 */
-extern singleScope* currentScope;
+extern single_scope* current_scope;
 
 /*
-*
-*	SYMBOL_TABLE METHODS AND INSTANCES
-*
+*	Head of the symbol table.
 */
-extern singleSymbol* symbol;
+extern single_symbol* symbol_head;
 
 /**
 *	Create a symbol without initializing it.
 * 	Declaring variable without instantiating it.
 */
-singleSymbol* initSymbol( char const *name ) {
+single_symbol* initSymbol( char const *name ) {
 	initScope();
-	singleSymbol* ptr = ( singleSymbol* ) malloc ( sizeof ( singleSymbol ) );
+	single_symbol* ptr = ( single_symbol* ) malloc ( sizeof ( single_symbol ) );
 	ptr->name = ( char* ) malloc ( strlen ( name ) + 1 );
 	ptr->is_initialized = 0;
-	ptr->scope = ( struct singleScope* ) currentScope;
+	ptr->scope = ( struct single_scope* ) current_scope;
 	strcpy ( ptr->name, name );
 	return ptr;
 }
 
-void setSymbolValue( singleSymbol* s, int value ) {
+/**
+*	Set the value of the given symbol with the given value.
+*/
+void setSymbolValue( single_symbol* s, int value ) {
 	s->value = value;
 }
 
-void insertSymbolInSymbolTable( singleSymbol* s ) {
-	s->next = ( struct singleSymbol* ) symbol;
-	symbol = s;
+/**
+*	Insert the given symbol as head of the symbol table.
+*/
+void insertSymbolInSymbolTable( single_symbol* s ) {
+	s->next = ( struct single_symbol* ) symbol_head;
+	symbol_head = s;
 }
 
-singleSymbol* declareVariable( singleSymbol* s ) {
-	singleScope* declaredVarScope = ( singleScope* ) s->scope;
+/**
+*	Returns a new symbol if in the current scope a variable is declared for the first time.
+*	Returns 0 otherwise.
+*/
+single_symbol* declareVariable( single_symbol* s ) {
+	single_scope* declaredVarScope = ( single_scope* ) s->scope;
 
-	singleSymbol* ptr;
-	for ( ptr = symbol; ptr != ( singleSymbol * ) 0; ptr = ( singleSymbol * ) ptr->next ) {
-		singleScope* myScope = ( singleScope* ) ptr->scope;
+	single_symbol* ptr;
+	for ( ptr = symbol_head; ptr != ( single_symbol * ) 0; ptr = ( single_symbol * ) ptr->next ) {
+		single_scope* myScope = ( single_scope* ) ptr->scope;
 		if( ( declaredVarScope->id == myScope->id ) && ( strcmp( s->name, ptr->name ) == 0 ) ) {
 			return 0;
 		}
@@ -69,12 +72,18 @@ singleSymbol* declareVariable( singleSymbol* s ) {
 	return s;
 }
 
-singleSymbol* findSymbol( singleSymbol* s ) {
-	singleScope* ptrToScope;
-	for ( ptrToScope = ( singleScope * ) s->scope; ptrToScope != ( singleScope * ) 0; ptrToScope = ( singleScope * ) ptrToScope->parent ) {
-		singleSymbol* ptrToSymbol;
-		for ( ptrToSymbol = symbol; ptrToSymbol != ( singleSymbol * ) 0; ptrToSymbol = ( singleSymbol * ) ptrToSymbol->next ) {
-			singleScope* currentSymbolScope = ( singleScope * ) ptrToSymbol->scope;
+/**
+*	Find a symbol in the symbol table.
+*	The more the scope is close to the scope of the given symbol, the more
+*	precedence has to be returned.
+*	Returns 0 if a symbol is not found.
+*/
+single_symbol* findSymbol( single_symbol* s ) {
+	single_scope* ptrToScope;
+	for ( ptrToScope = ( single_scope * ) s->scope; ptrToScope != ( single_scope * ) 0; ptrToScope = ( single_scope * ) ptrToScope->parent ) {
+		single_symbol* ptrToSymbol;
+		for ( ptrToSymbol = symbol_head; ptrToSymbol != ( single_symbol * ) 0; ptrToSymbol = ( single_symbol * ) ptrToSymbol->next ) {
+			single_scope* currentSymbolScope = ( single_scope * ) ptrToSymbol->scope;
 			if( ( ptrToScope->id == currentSymbolScope->id ) && ( strcmp( s->name, ptrToSymbol->name ) == 0 ) ) {
 				return ptrToSymbol;
 			}
@@ -87,20 +96,27 @@ singleSymbol* findSymbol( singleSymbol* s ) {
 *	Create a symbol giving it a value, used for unbounded variables.
 *	Used for VALUEs, not for IDs.
 */
-singleSymbol* createUnlinkedSymbol( int const input_value ) {
-	singleSymbol* unbound = initSymbol( "unlinked_var" );
+single_symbol* createUnlinkedSymbol( int const input_value ) {
+	single_symbol* unbound = initSymbol( "unlinked_var" );
 	unbound->is_initialized = 1;
 	unbound->value = input_value;
 	return unbound;
 }
 
+/**
+*	Method that prints the symbol table to the screen in the following format:
+*	--------------------------------------------
+*	| NAME   | VALUE     | SC_ID   | SC_LEVEL  |
+*	--------------------------------------------
+*	...
+*/
 void printSymbolTable() {
-	singleSymbol* ptr;
+	single_symbol* ptr;
 	printf( "--------------------------------------------\n" );
 	printf( "| \e[0;34mNAME\e[0m   | \e[0;34mVALUE\e[0m     | \e[0;34mSC_ID\e[0m   | \e[0;34mSC_LEVEL\e[0m  |\n" );
 	printf( "--------------------------------------------\n" );
-	for ( ptr = symbol; ptr != ( singleSymbol * ) 0; ptr = ( singleSymbol * ) ptr->next ) {
-		singleScope* currentSymbolScope = ( singleScope * ) ptr->scope;
+	for ( ptr = symbol_head; ptr != ( single_symbol * ) 0; ptr = ( single_symbol * ) ptr->next ) {
+		single_scope* currentSymbolScope = ( single_scope * ) ptr->scope;
 		printf( "| %-7.7s| %-10.10s| %-8d| %-10d|\n", 
 						ptr->name, 
 						( ptr->is_initialized ) ? boolToString( ptr->value ) : "not init", 

@@ -1,5 +1,20 @@
+/**
+*     
+*     Syntactic and semantic definition of the BoolLanguage. 
+*     
+*     The file is divided in three parts:
+*           - c imports;
+*           - set of rules that identifies the syntactic part of the language,
+*             each one linked to an action that will manage the semantic part;
+*           - main method and generic c code (the result of the compiler will be an executable).
+*
+*/
+
 %{
 
+/*
+*     Suppress warnings at compile time.
+*/
 int yylex();
 void yyerror( const char *s );
 
@@ -10,27 +25,24 @@ void yyerror( const char *s );
 
 #include "symbol_table.h"
 #include "scope.h"
+#include "utils.h"
+
 %}
 
-
+/*
+*     Union of all the accepted types that can be returned by a rule. Basically
+*     the type of the value of each ID.
+*/
 %union {
-            int booleanVal;               // boolean value
-            singleSymbol* symbol;         // type of a symbol
-       }
+            int booleanVal;               // boolean value, can be either 1 or 0
+            single_symbol* symbol;        // type of a symbol
+            char* stringVal;              // value of a string 
+}
 
 %token <booleanVal>     BOOLEAN
 %token <symbol>         ID
-%token                  SEMI
-%token                  AND
-%token                  OR
-%token                  XOR
-%token                  NOT
-%token                  LEFTPAR
-%token                  RIGHTPAR
-%token                  LET
-%token                  ASSIGN
-%token                  LEFTCUR
-%token                  RIGHTCUR
+%token <stringVal>      STRING
+%token                  SEMI AND OR XOR NOT LEFTPAR RIGHTPAR LET ASSIGN LEFTCUR RIGHTCUR YELL COMMA
 
 %type <symbol>          operation
 
@@ -51,14 +63,15 @@ scope       : statement scope
             ;
 
 statement   : LEFTCUR scope RIGHTCUR
-            | operation SEMI              { printf( "\e[32mRESULT: %d\e[0m\n", $1->value ); }
+            | operation SEMI
             | declaration SEMI
             | instantiation SEMI
             | assignment SEMI
+            | print SEMI
             ;
 
 declaration : LET ID                      {
-                                               singleSymbol* mySym = declareVariable( $2 );
+                                               single_symbol* mySym = declareVariable( $2 );
                                                if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] is already defined in the current scope", $2->name );
@@ -69,7 +82,7 @@ declaration : LET ID                      {
             ;
 
 instantiation : LET ID ASSIGN operation   {
-                                                singleSymbol* mySym = declareVariable( $2 );
+                                                single_symbol* mySym = declareVariable( $2 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] is already defined in the current scope", $2->name );
@@ -82,7 +95,7 @@ instantiation : LET ID ASSIGN operation   {
             ;
 
 assignment  : ID ASSIGN operation         {
-                                                singleSymbol* mySym =  findSymbol( $1 );
+                                                single_symbol* mySym =  findSymbol( $1 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] has not been declared", $1->name );
@@ -100,7 +113,7 @@ operation   : operation AND operation     { $$ = createUnlinkedSymbol( $1->value
             | LEFTPAR operation RIGHTPAR  { $$ = $2; }
             | NOT operation               { $$ = createUnlinkedSymbol( !$2->value ); }
             | ID                          {
-                                                singleSymbol* mySym =  findSymbol( $1 );
+                                                single_symbol* mySym =  findSymbol( $1 );
                                                 if( mySym == 0 ) {
                                                       char *temp;
                                                       asprintf( &temp, "Variable [%s] has not been declared", $1->name );
@@ -118,12 +131,34 @@ operation   : operation AND operation     { $$ = createUnlinkedSymbol( $1->value
             | BOOLEAN                     { $$ = createUnlinkedSymbol( $1 ); }
             ;
 
+print       : YELL LEFTPAR STRING RIGHTPAR     
+                                          {
+                                                printf( "%s\n", $3 );
+                                          }
+            | YELL LEFTPAR STRING COMMA STRING RIGHTPAR 
+                                          {
+                                                printf( "%s%s", computeColor( $3 ), $5 );
+                                                printf( "%s", "\e[0m\n" );
+                                          }
+            | YELL LEFTPAR STRING COMMA operation RIGHTPAR
+                                          {
+                                                printf( "%s -- ", $3 );
+                                                printf( "%s\n", boolToString( $5->value ) );
+                                          }
+            | YELL LEFTPAR STRING COMMA STRING COMMA operation RIGHTPAR
+                                          {
+                                                printf( "%s%s -- ", computeColor( $3 ), $5 );
+                                                printf( "%s", boolToString( $7->value ) );
+                                                printf( "%s", "\e[0m\n" );
+                                          }
+            ;
+
 %%
 
 #include "lex.yy.c"
 
-singleSymbol *symbol = 0;
-singleScope *currentScope = 0;
+single_symbol *symbol_head = 0;
+single_scope *current_scope = 0;
 
 extern int yylineno;
 
@@ -132,9 +167,8 @@ void yyerror (char const *message) {
 }
 
 int main( int argc, char *argv[] ) {
-      FILE *fp = fopen( argv[1], "r" );
-      if(!fp) 
-      {
+      FILE *fp = fopen( argv[ 1 ], "r" );
+      if( !fp ) {
             printf( "Unable to open file for reading\n" );
             exit( 0 );
       }
