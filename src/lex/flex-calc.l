@@ -20,6 +20,7 @@
 
 	#include "bool_operations.h"
 	#include "symbol_table.h"
+	#include "utils.h"
 
 	/*
 	*	Root scope of the program is 0. 
@@ -43,6 +44,7 @@ DIGIT    [0-9]
 LETTER   [a-zA-Z]
 ID       {LETTER}({LETTER}|{DIGIT})*
 COMMENT  \/\*([^*]|\n)*\*\/ 
+STRING   \"(([^\"]|\\\")*[^\\])?\"
 
 %%
 
@@ -56,6 +58,11 @@ COMMENT  \/\*([^*]|\n)*\*\/
 
 {COMMENT}	{
 				/* skip comment */  
+			}
+
+{STRING}	{
+				yylval.stringVal = formatString( yytext );
+				return STRING;
 			}
 
 "//"		{
@@ -73,6 +80,10 @@ true|false	{
 
 let 		{
 				return LET;
+			}
+
+yell		{
+				return YELL;
 			}
 
 {ID}		{
@@ -105,6 +116,7 @@ let 		{
 "^"			{ return XOR; }
 "!"			{ return NOT; }
 "="			{ return ASSIGN; }
+","			{ return COMMA; }
 
 .           { 
 				printf( "Unexpected character: %c\n", yytext[ 0 ] ); return yytext[ 0 ]; 

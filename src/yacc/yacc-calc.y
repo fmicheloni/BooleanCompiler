@@ -25,6 +25,8 @@ void yyerror( const char *s );
 
 #include "symbol_table.h"
 #include "scope.h"
+#include "utils.h"
+
 %}
 
 /*
@@ -34,11 +36,13 @@ void yyerror( const char *s );
 %union {
             int booleanVal;               // boolean value, can be either 1 or 0
             single_symbol* symbol;        // type of a symbol
+            char* stringVal;              // value of a string 
 }
 
 %token <booleanVal>     BOOLEAN
 %token <symbol>         ID
-%token                  SEMI AND OR XOR NOT LEFTPAR RIGHTPAR LET ASSIGN LEFTCUR RIGHTCUR
+%token <stringVal>      STRING
+%token                  SEMI AND OR XOR NOT LEFTPAR RIGHTPAR LET ASSIGN LEFTCUR RIGHTCUR YELL COMMA
 
 %type <symbol>          operation
 
@@ -59,10 +63,11 @@ scope       : statement scope
             ;
 
 statement   : LEFTCUR scope RIGHTCUR
-            | operation SEMI              { printf( "\e[32mRESULT: %d\e[0m\n", $1->value ); }
+            | operation SEMI
             | declaration SEMI
             | instantiation SEMI
             | assignment SEMI
+            | print SEMI
             ;
 
 declaration : LET ID                      {
@@ -126,6 +131,28 @@ operation   : operation AND operation     { $$ = createUnlinkedSymbol( $1->value
             | BOOLEAN                     { $$ = createUnlinkedSymbol( $1 ); }
             ;
 
+print       : YELL LEFTPAR STRING RIGHTPAR     
+                                          {
+                                                printf( "%s\n", $3 );
+                                          }
+            | YELL LEFTPAR STRING COMMA STRING RIGHTPAR 
+                                          {
+                                                printf( "%s%s", computeColor( $3 ), $5 );
+                                                printf( "%s", "\e[0m\n" );
+                                          }
+            | YELL LEFTPAR STRING COMMA operation RIGHTPAR
+                                          {
+                                                printf( "%s -- ", $3 );
+                                                printf( "%s\n", boolToString( $5->value ) );
+                                          }
+            | YELL LEFTPAR STRING COMMA STRING COMMA operation RIGHTPAR
+                                          {
+                                                printf( "%s%s -- ", computeColor( $3 ), $5 );
+                                                printf( "%s", boolToString( $7->value ) );
+                                                printf( "%s", "\e[0m\n" );
+                                          }
+            ;
+
 %%
 
 #include "lex.yy.c"
@@ -140,9 +167,8 @@ void yyerror (char const *message) {
 }
 
 int main( int argc, char *argv[] ) {
-      FILE *fp = fopen( argv[1], "r" );
-      if(!fp) 
-      {
+      FILE *fp = fopen( argv[ 1 ], "r" );
+      if( !fp ) {
             printf( "Unable to open file for reading\n" );
             exit( 0 );
       }

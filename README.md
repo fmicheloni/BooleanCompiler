@@ -15,6 +15,7 @@ The language supports the following features:
 * Scoping
 * Operators' precendence (c-like)
 * Comments
+* Smart printing
 
 ### Examples
 
@@ -58,6 +59,19 @@ The language supports the following features:
     }
 ```
 
+5. *Printing*
+```typescript
+    /* 
+        First parameter is the color: red, blue or green.
+        Second parameter is the message itself.
+        Third parameter an operation.
+    */
+
+    yell( "I'm a simple yell." );
+    yell( "blue", "I'm a colored yell." );
+    yell( "I'm a yell with parameter.", false );
+    yell( "green", "I'm a colored yell with parameter.", true&&false );
+```
 
 ## Info
 Project for the Formal Languages and Compilers exam / UNIBZ / 2016-2017

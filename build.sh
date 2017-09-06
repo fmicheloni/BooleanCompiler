@@ -10,6 +10,7 @@ echo "Copying resources..."
 cp src/boolean/bool_operations.h dist/
 cp src/symboltable/symbol_table.h dist/
 cp src/symboltable/scope.h dist/
+cp src/utils/utils.h dist/
 
 echo "Flex phase..."
 flex -o dist/lex.yy.c src/lex/flex-calc.l
