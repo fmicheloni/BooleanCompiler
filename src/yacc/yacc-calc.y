@@ -16,7 +16,7 @@
 *     Suppress warnings at compile time.
 */
 int yylex();
-void yyerror( const char *s );
+int yyerror( const char *s );
 
 #include <stdlib.h>
 #include <string.h>
@@ -162,8 +162,9 @@ single_scope *current_scope = 0;
 
 extern int yylineno;
 
-void yyerror (char const *message) {
+int yyerror (char const *message) {
       fprintf(stderr, "\e[91mERROR -> { %s } in line %d.\n", message, yylineno );
+      return 1;
 }
 
 int main( int argc, char *argv[] ) {

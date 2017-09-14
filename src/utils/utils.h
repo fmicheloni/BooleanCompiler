@@ -24,6 +24,4 @@ char* computeColor( char* str ) {
 	return "";
 }
 
-
-
 #endif

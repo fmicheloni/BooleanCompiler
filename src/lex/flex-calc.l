@@ -87,7 +87,7 @@ yell		{
 			}
 
 {ID}		{
-            	char* name = strdup(yytext); 
+            	char* name = strdup( yytext ); 
             	single_symbol* s = initSymbol( name );
 
 				yylval.symbol = s;
@@ -119,7 +119,7 @@ yell		{
 ","			{ return COMMA; }
 
 .           { 
-				printf( "Unexpected character: %c\n", yytext[ 0 ] ); return yytext[ 0 ]; 
+				printf( "\e[91mUnexpected character \"%c\" in line %d\n", yytext[ 0 ], yylineno ); exit( 1 ); 
 			}
 
 %%
